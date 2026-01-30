@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Products CRUD</title>
+    <style>
+      table, td, th { border: 1px solid #999; border-collapse: collapse; padding: 6px; }
+      input { margin: 4px 0; }
+    </style>
+  </head>
+  <body>
+    <h2>Products CRUD (JWT Protected)</h2>
+
+    <p>
+      Token in localStorage: <b id="tstatus"></b>
+      <button id="clearToken">Clear Token</button>
+      <a href="/login.html">Go Login</a>
+    </p>
+
+    <h3>Create Product</h3>
+    <form id="createForm">
+      <input id="pid" placeholder="product_id (3 chars)" maxlength="3" required />
+      <input id="pname" placeholder="product_name" maxlength="50" required />
+      <button type="submit">Create</button>
+    </form>
+
+    <h3>List</h3>
+    <button id="refresh">Refresh</button>
+    <pre id="out"></pre>
+
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Name</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+
+    <p><a href="/">Back</a></p>
+
+    <script>
+      const tstatus = document.getElementById("tstatus");
+      const clearToken = document.getElementById("clearToken");
+      const out = document.getElementById("out");
+      const tbody = document.getElementById("tbody");
+
+      function token() {
+        return localStorage.getItem("token");
+      }
+
+      function updateTokenUI() {
+        tstatus.textContent = token() ? "YES" : "NO";
+      }
+      updateTokenUI();
+
+      clearToken.onclick = () => {
+        localStorage.removeItem("token");
+        updateTokenUI();
+      };
+
+      async function api(path, options = {}) {
+        const t = token();
+        const headers = options.headers || {};
+        if (t) headers["Authorization"] = "Bearer " + t;
+        return fetch(path, { ...options, headers });
+      }
+
+      async function load() {
+        out.textContent = "Loading...";
+        tbody.innerHTML = "";
+
+        const r = await api("/api/products");
+        const txt = await r.text();
+        out.textContent = txt;
+
+        if (!r.ok) return;
+
+        const items = JSON.parse(txt);
+        for (const p of items) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${p.product_id}</td>
+            <td><input value="${p.product_name}" data-id="${p.product_id}" /></td>
+            <td>
+              <button data-act="update" data-id="${p.product_id}">Update</button>
+              <button data-act="delete" data-id="${p.product_id}">Delete</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+
+      document.getElementById("refresh").onclick = load;
+
+      document.getElementById("createForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        out.textContent = "Creating...";
+
+        const body = {
+          product_id: document.getElementById("pid").value.trim(),
+          product_name: document.getElementById("pname").value.trim()
+        };
+
+        const r = await api("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        out.textContent = await r.text();
+        await load();
+      });
+
+      tbody.addEventListener("click", async (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+
+        const id = btn.dataset.id;
+        const act = btn.dataset.act;
+
+        if (act === "delete") {
+          out.textContent = "Deleting...";
+          const r = await api("/api/products/" + id, { method: "DELETE" });
+          out.textContent = await r.text();
+          await load();
+        }
+
+        if (act === "update") {
+          const input = tbody.querySelector(`input[data-id="${id}"]`);
+          const product_name = input.value.trim();
+          out.textContent = "Updating...";
+
+          const r = await api("/api/products/" + id, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ product_name })
+          });
+
+          out.textContent = await r.text();
+          await load();
+        }
+      });
+
+      load();
+    </script>
+  </body>
+</html>

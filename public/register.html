@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Register</title>
+  </head>
+  <body>
+    <h2>Register</h2>
+
+    <form id="f">
+      <input id="user_id" placeholder="user_id (3 chars)" maxlength="3" required />
+      <br />
+      <input id="user_name" placeholder="user_name" maxlength="30" required />
+      <br />
+      <input id="user_password" placeholder="password" type="password" required />
+      <br />
+      <button type="submit">Register</button>
+    </form>
+
+    <pre id="out"></pre>
+
+    <p><a href="/">Back</a></p>
+
+    <script>
+      const f = document.getElementById("f");
+      const out = document.getElementById("out");
+
+      f.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        out.textContent = "Loading...";
+
+        const body = {
+          user_id: document.getElementById("user_id").value.trim(),
+          user_name: document.getElementById("user_name").value.trim(),
+          user_password: document.getElementById("user_password").value
+        };
+
+        const r = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        out.textContent = await r.text();
+      });
+    </script>
+  </body>
+</html>
