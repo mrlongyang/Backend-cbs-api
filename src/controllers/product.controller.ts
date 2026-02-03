@@ -8,6 +8,7 @@ export async function createProduct(req: Request, res: Response) {
   const { product_id, product_name } = req.body as { product_id: string; product_name: string };
 
   if (!product_id || !product_name) return res.status(400).json({ message: "Missing fields" });
+  
   if (product_id.length !== 3) return res.status(400).json({ message: "product_id must be 3 characters" });
 
   try {
