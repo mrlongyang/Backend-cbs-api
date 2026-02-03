@@ -17,6 +17,7 @@ export async function register(req: Request, res: Response) {
   if (!user_id || !user_name || !user_password) {
     return res.status(400).json({ message: "Missing fields" });
   }
+  
   if (user_id.length !== 3) {
     return res.status(400).json({ message: "user_id must be 3 characters" });
   }
