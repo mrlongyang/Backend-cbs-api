@@ -24,7 +24,8 @@ export async function register(req: Request, res: Response) {
 
   try {
     const [exists] = await db.query<any[]>("SELECT user_id FROM user WHERE user_id=?", [user_id]);
-    if (exists.length > 0) return res.status(409).json({ message: "User already exists" });
+    if (exists.length > 0)
+       return res.status(409).json({ message: "User already exists" });
 
     const hashed = md5(user_password);
 
